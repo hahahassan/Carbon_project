@@ -1,0 +1,34 @@
+---
+title: "4810_Project"
+author: "Nandar May"
+date: "2024-03-19"
+output: html_document
+---
+
+```{r}
+set.seed(123)
+carbon <- read.csv("CarbonEmission.csv", header = T)
+
+split <- sample(c(TRUE, FALSE), nrow(carbon), replace=TRUE, prob=c(0.7, 0.3))
+train <- carbon[split, ]
+test <- carbon[!split, ]
+```
+
+```{r}
+vars <- step(lm(CarbonEmission ~ Body.Type + Sex + Diet + How.Often.Shower + 
+    Heating.Energy.Source + Transport + Vehicle.Type + Social.Activity + 
+    Monthly.Grocery.Bill + Frequency.of.Traveling.by.Air + Vehicle.Monthly.Distance.Km + 
+    Waste.Bag.Size + Waste.Bag.Weekly.Count + How.Long.TV.PC.Daily.Hour + 
+    How.Many.New.Clothes.Monthly + How.Long.Internet.Daily.Hour + 
+    Energy.efficiency, data = train), direction = "both")
+```
+
+```{r}
+s = summary(vars)$sigma
+plot(vars$fitted.values, vars$residuals)
+abline(h = 0, col = "red")
+abline(h = c(-2, 2)*s, col = "red")
+
+
+```
+
