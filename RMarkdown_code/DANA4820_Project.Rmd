@@ -1,0 +1,106 @@
+---
+title: "Dana4820_project"
+author: "HassanZhang"
+date: "`r Sys.Date()`"
+output: html_document
+---
+```{r}
+car.emi = read.csv('Carbon Emission.csv')
+dim(car.emi)
+```
+
+```{r}
+str(car.emi)
+```
+```{r}
+car.emi$CarbonEmission.Level = ifelse(car.emi$CarbonEmission > mean(car.emi$CarbonEmission),'High','Low')
+table(car.emi$CarbonEmission.Level)
+```
+
+# Q1 . is diet has a significant effect on carbon emission level ???  with lurking variable 'social activity'...
+
+chi-square test / 2 -way table,
+
+Energy.efficiency
+```{r}
+table1 = xtabs( ~ CarbonEmission.Level + Diet,data = car.emi)
+table1
+chisq.test(table1)
+```
+```{r}
+xtabs(~ CarbonEmission.Level + Diet + Social.Activity, data=car.emi)
+```
+
+
+
+```{r}
+
+Social.Activity = c('never',     'often', 'sometimes')
+for (Social.Activity_level in Social.Activity){
+  print(Social.Activity_level)
+  t_i = xtabs(~ CarbonEmission.Level  + Diet, Social.Activity==Social.Activity_level, data=car.emi)
+  t_i_oddsratio = epitools::oddsratio(t_i, method = "wald", conf = 0.95, correct = FALSE)
+  print(t_i_oddsratio)
+  print('-----------------------')
+  }
+```
+
+
+## Q2 GLM  , 1000 dollor increases in bill has 5.5% increase in the number of cloth bought
+
+log(pi) = b0 + b1*bill
+bi = 5.467e-05
+this means 1000 dollar increase in bill, the log(pi) increase bi = 5.467e-05, then pi increase 
+
+> exp(5.467e-05)
+[1] 1.000055
+
+```{r}
+
+cloth.model = glm(How.Many.New.Clothes.Monthly ~ Monthly.Grocery.Bill ,data = car.emi,family = poisson(link = 'log'))
+summary(cloth.model)
+```
+```{r}
+D = deviance(cloth.model)
+D
+df = cloth.model$df.residual
+df
+pchisq(D,df,lower.tail = FALSE)
+```
+
+
+# Q3 ordinal 
+Social.Activity 
+Energy.efficiency
+
+```{r}
+social.energy.table = xtabs(~Social.Activity+Energy.efficiency,data = car.emi)
+social.energy.table
+```
+
+
+```{r}
+library(vcdExtra)
+A=CMHtest(social.energy.table, rscores = c(0,1,2),cscores=c(0,1,2), types="cor")
+A
+```
+
+
+```{r}
+#Sample correlation R
+n=sum(social.energy.table)
+n
+M=sqrt(A$table[1])
+M
+R=M/sqrt(n)
+R
+#P-value for one-sided standard normal with M statistic
+
+P_value=pnorm(M, lower.tail = FALSE)
+P_value
+```
+
+
+
+
+
