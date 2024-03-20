@@ -1,0 +1,100 @@
+---
+title: "CMNS"
+author: "Nandar May"
+date: "2024-03-19"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+
+# Transport
+transport.mean <-  aggregate(CarbonEmission ~ Transport, data = carbon, FUN = mean)
+
+ggplot(carbon, aes(Transport, CarbonEmission, fill = Transport)) +  # 'fill' aesthetic for color grouping
+    geom_bar(position = 'dodge', stat = 'summary', fun = 'mean', colour="seagreen") +
+    geom_text(data = transport.mean, aes(label = round(CarbonEmission), y = CarbonEmission + 0.5), 
+            position = position_dodge(width = 0.9), size = 5, vjust = -0.5) + 
+    labs(title = "Average Carbon Emission by Transport Mode", x = NULL, y = NULL) +  # Title
+    scale_fill_manual(values = c("aquamarine", "aquamarine2", "aquamarine3")) + 
+    theme(
+        plot.title = element_text(size = 30, face = "bold"),  # Change title font size
+        axis.text = element_text(size = 15)
+    ) +
+    guides(fill = FALSE)
+
+# Recycling
+recycle.mean <- aggregate(CarbonEmission ~ Total.Recycling, data = carbon, FUN = mean)
+
+ggplot(carbon, aes(factor(Total.Recycling), CarbonEmission, fill = factor(Total.Recycling))) +  # 'fill' aesthetic for color grouping
+    geom_bar(position = 'dodge', stat = 'summary', fun = 'mean', colour="seagreen") +
+    geom_text(data = recycle.mean, aes(label = round(CarbonEmission), y = CarbonEmission + 0.5), 
+              position = position_dodge(width = 0.9), size = 5, vjust = -0.5) + 
+    labs(title = "Average Carbon Emission by Recycling", x = NULL, y = NULL) +  # Title
+    scale_fill_manual(values = c("aquamarine", "aquamarine2", "aquamarine3", "aquamarine4", "springgreen4")) + 
+    theme(
+        plot.title = element_text(size = 30, face = "bold"),  # Change title font size
+        axis.text = element_text(size = 15)
+    ) +
+    guides(fill = FALSE)
+
+# Garbage Size
+waste.mean <- aggregate(CarbonEmission ~ Waste.Bag.Size, data = carbon, FUN = mean)
+
+ggplot(carbon, aes(factor(Waste.Bag.Size), CarbonEmission, fill = factor(Waste.Bag.Size))) +  # 'fill' aesthetic for color grouping
+    geom_bar(position = 'dodge', stat = 'summary', fun = 'mean', colour="seagreen") +
+    geom_text(data = waste.mean, aes(label = round(CarbonEmission), y = CarbonEmission + 0.5), 
+            position = position_dodge(width = 0.9), size = 5, vjust = -0.5) + 
+    labs(title = "Average Carbon Emission by Garbage Size", x = NULL, y = NULL) +  # Title
+    scale_fill_manual(values = c("aquamarine", "aquamarine2", "aquamarine3", "aquamarine4")) + 
+    theme(
+        plot.title = element_text(size = 30, face = "bold"),  # Change title font size
+        axis.text = element_text(size = 15)
+    ) +
+    guides(fill = FALSE)
+
+# Social Life
+carbon$Social.Activity <- factor(carbon$Social.Activity, levels = c("often", "sometimes", "never"))
+social.mean <- aggregate(CarbonEmission ~ Social.Activity, data = carbon, FUN = mean)
+
+ggplot(carbon, aes(Social.Activity, CarbonEmission, fill = Social.Activity)) +  # 'fill' aesthetic for color grouping
+    geom_bar(position = 'dodge', stat = 'summary', fun = 'mean', colour="seagreen") +
+    geom_text(data = social.mean, aes(label = round(CarbonEmission), y = CarbonEmission + 0.5), 
+            position = position_dodge(width = 0.9), size = 5, vjust = -0.5) + 
+    labs(title = "Average Carbon Emission by Social Activity", x = NULL, y = NULL) +  # Title
+    scale_fill_manual(values = c("aquamarine2", "aquamarine3", "aquamarine4")) + 
+    theme(
+        plot.title = element_text(size = 30, face = "bold"),  # Change title font size
+        axis.text = element_text(size = 15)
+    ) +
+    guides(fill = FALSE)
+
+# Diet
+filtered_carbon <- subset(carbon, Diet %in% c("omnivore", "vegan"))
+filtered_carbon$Diet <- factor(filtered_carbon$Diet, levels = c("omnivore", "vegan"))
+diet.mean <- aggregate(CarbonEmission ~ Diet, data = filtered_carbon, FUN = mean)
+
+ggplot(filtered_carbon, aes(Diet, CarbonEmission, fill = Diet)) +
+    geom_bar(position = 'dodge', stat = 'summary', fun = 'mean', colour="seagreen") +
+    geom_text(data = diet.mean, aes(label = round(CarbonEmission), y = CarbonEmission + 0.5), 
+            position = position_dodge(width = 0.9), size = 5, vjust = -0.5) + 
+    labs(title = "Average Carbon Emission by Dietary Preferences", x = NULL, y = NULL) +  # Title
+    scale_fill_manual(values = c("aquamarine2", "aquamarine3")) + 
+    theme(
+      plot.title = element_text(size = 29, face = "bold"),  # Change title font size
+      axis.text = element_text(size = 15)
+    ) +
+    guides(fill = FALSE)
+
+# ggplot(carbon, aes(Diet, CarbonEmission, fill = Diet)) +  # 'fill' aesthetic for color grouping
+#     geom_bar(position = 'dodge', stat = 'summary', fun = 'mean', colour="seagreen") +
+#     geom_text(data = diet.mean, aes(label = round(CarbonEmission), y = CarbonEmission + 0.5), 
+#             position = position_dodge(width = 0.9), size = 5, vjust = -0.5) + 
+#     labs(title = "Average Carbon Emission by Dietary Preferences", x = NULL, y = NULL) +  # Title
+#     scale_fill_manual(values = c("aquamarine3", "aquamarine4", "aquamarine", "aquamarine2")) + 
+#     theme(
+#         plot.title = element_text(size = 30, face = "bold"),  # Change title font size
+#         axis.text = element_text(size = 15)
+#     ) +
+#     guides(fill = FALSE)
+```
