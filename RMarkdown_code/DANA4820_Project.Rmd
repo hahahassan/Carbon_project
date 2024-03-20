@@ -8,8 +8,8 @@ output: html_document
 set.seed(123)
 carbon <- read.csv("..\\data\\Carbon Emission.csv", header = T)
 
-carbon$List.Recycling <- lapply(carbon$Recycling, function(x) as.list(unlist(strsplit(gsub("\\[|\\]", "", x), ",")))) # i delete the as.numeric function, it still works, I don't know why we had that function in the beginning
-lengths <- sapply(carbon$List.Recycling, length)
+List.Recycling <- lapply(carbon$Recycling, function(x) as.list(unlist(strsplit(gsub("\\[|\\]", "", x), ",")))) # i delete the as.numeric function, it still works, I don't know why we had that function in the beginning
+lengths <- sapply(List.Recycling, length)
 carbon$Total.Recycling <- lengths
 
 split <- sample(c(TRUE, FALSE), nrow(carbon), replace=TRUE, prob=c(0.7, 0.3))
