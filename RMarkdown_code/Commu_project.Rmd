@@ -31,10 +31,40 @@ chisq.test(table1)
 ```{r}
 xtabs(~ CarbonEmission.Level + Diet + Social.Activity, data=car.emi)
 ```
+
 ```{r}
 
-boxplot(subset(car.emi,Diet==c('ominivore','vegan'))$CarbonEmission ~ subset(car.emi,Diet==c('ominivore','vegan'))$Diet)
+mean_comparison <- aggregate(CarbonEmission ~ Diet, data = subset(car.emi, Diet %in% c('omnivore', 'vegan')), FUN = mean)
+# Base R barplot
+barplot(mean_comparison$CarbonEmission, 
+        names.arg = mean_comparison$Diet, 
+        main = "Average Carbon Emission by Diet", 
+        xlab = "Diet", 
+        ylab = "Average Carbon Emission", 
+        ylim = c(0,3000),
+        width = c(0.3),
+        col = "skyblue")
 
+
+```
+```{r}
+library(ggplot2)
+```
+
+
+```{r}
+ggplot(subset(car.emi, Diet %in% c('omnivore', 'vegan')), 
+       aes(Diet, CarbonEmission, fill = Diet)) +  # 'fill' aesthetic for color grouping
+    geom_bar(position = 'dodge', stat = 'summary', fun = 'mean', colour="seagreen") +
+    labs(title = "Average Carbon Emission by Dietary Preference", x = NULL , y= NULL) +  # Title
+    scale_fill_manual(values = c( "aquamarine2", "aquamarine3")) + 
+    theme(
+        plot.title = element_text(size = 20, face = "bold"),  # Change title font size
+        axis.text = element_text(size = 15),
+        legend.position = "none",  # Remove legend
+          )  
+  #ylim(c(0, 1800))  # Set y-axis limits
+    
 ```
 
 
