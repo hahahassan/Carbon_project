@@ -6,9 +6,9 @@ output: html_document
 ---
 ```{r}
 set.seed(123)
-carbon <- read.csv("CarbonEmission.csv", header = T)
+carbon <- read.csv("..\\data\\Carbon Emission.csv", header = T)
 
-carbon$List.Recycling <- lapply(carbon$Recycling, function(x) as.list(as.numeric(unlist(strsplit(gsub("\\[|\\]", "", x), ", ")))))
+carbon$List.Recycling <- lapply(carbon$Recycling, function(x) as.list(unlist(strsplit(gsub("\\[|\\]", "", x), ",")))) # i delete the as.numeric function, it still works, I don't know why we had that function in the beginning
 lengths <- sapply(carbon$List.Recycling, length)
 carbon$Total.Recycling <- lengths
 
