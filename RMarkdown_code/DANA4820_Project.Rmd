@@ -18,12 +18,12 @@ test <- carbon[!split, ]
 ```
 
 ```{r}
-str(car.emi)
+str(train)
 ```
 
 ```{r}
-car.emi$CarbonEmission.Level = ifelse(car.emi$CarbonEmission > mean(car.emi$CarbonEmission),'High','Low')
-table(car.emi$CarbonEmission.Level)
+train$CarbonEmission.Level = ifelse(train$CarbonEmission > mean(train$CarbonEmission),'High','Low')
+table(train$CarbonEmission.Level)
 ```
 
 # Q1 . is diet has a significant effect on carbon emission level ???  with lurking variable 'social activity'...
@@ -32,16 +32,28 @@ chi-square test / 2 -way table,
 
 Energy.efficiency
 ```{r}
-table1 = xtabs( ~ CarbonEmission.Level + Diet,data = car.emi)
+table1 = xtabs( ~ CarbonEmission.Level + Diet,data = train)
 table1
 chisq.test(table1)
 ```
 ```{r}
-xtabs(~ CarbonEmission.Level + Diet + Social.Activity, data=car.emi)
+xtabs(~ CarbonEmission.Level + Diet + Social.Activity, data=train)
 ```
 ```{r}
 
-boxplot(subset(car.emi,Diet==c('ominivore','vegan'))$CarbonEmission ~ subset(car.emi,Diet==c('ominivore','vegan'))$Diet)
+boxplot(CarbonEmission ~Diet,data =  train)
+
+library(ggplot2)
+
+# Sample ggplot boxplot command
+ggplot(data = train, aes(x = Diet, y = CarbonEmission, fill = Diet)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("omnivore" = "blue", "pescatarian" = "green", "vegan" = "red", "vegetarian" = "yellow")) +
+  labs(title = "Boxplot of Carbon Emission by Diet",
+       x = "Diet",
+       y = "Carbon Emission",
+       fill = "Diet Category") +
+  theme_minimal()
 
 ```
 
@@ -52,12 +64,45 @@ boxplot(subset(car.emi,Diet==c('ominivore','vegan'))$CarbonEmission ~ subset(car
 Social.Activity = c('never',     'often', 'sometimes')
 for (Social.Activity_level in Social.Activity){
   print(Social.Activity_level)
-  t_i = xtabs(~ CarbonEmission.Level  + Diet, Social.Activity==Social.Activity_level, data=car.emi)
+  t_i = xtabs(~ CarbonEmission.Level  + Diet, Social.Activity==Social.Activity_level, data=train)
   t_i_oddsratio = epitools::oddsratio(t_i, method = "wald", conf = 0.95, correct = FALSE)
   print(t_i_oddsratio)
   print('-----------------------')
   }
 ```
+
+###Social.Activity == never: 
+Since chi.square p-value > 0.05, we fail to reject H0 𝜃=1, the odd of having a high level carbon emission for each diet category are NOT different for people who never going social , we conclude that there is no association between whether having a high level carbon emission and dietary choices.
+From confidence interval results, since 1 is in the CI(0.975007 1.431037) we conclude there is not enough evidence to say there is association between Dietary choices and CarbonEmissionLevel.
+
+###Social.Activity == often: 
+Since chi.square p-value <0.05, we reject H0 𝜃=1, the odd of having a high level carbon emission for each diet category are different for people who often going social , we conclude that there is association between whether having a high level carbon emission and dietary choices.
+From confidence interval results (1.086801 1.591709), we are 95% confident that the odd of XXX for XXX is between XXX XXX than the odd of XXX for XXX for people who often going social.
+
+###Social.Activity == sometimes: 
+Since chi.square p-value <0.05, we reject H0 𝜃=1, the odd of having a high level carbon emission for each diet category are different for people who sometimes going social , we conclude that there is association between whether having a high level carbon emission and dietary choices.
+
+#? how to interpret CI(1.109186 1.644661), which group'odd is higher??
+
+```{r}
+library(tidyr)
+
+# Step 1: Create a 3-way contingency table
+contingency_table <- xtabs(~ CarbonEmission.Level + Diet + Social.Activity, data=train)
+
+# Step 2: Convert the table to a long-format data frame
+long_df <- as.data.frame.table(contingency_table)
+
+# Step 3: Reshape the long-format data frame to a wide format
+wide_df <- pivot_wider(long_df, names_from = CarbonEmission.Level, values_from = Freq,
+                       id_cols = c(Social.Activity, Diet))
+wide_df
+# Now `wide_df` is a data frame with `Social.Activity` and `Diet` as hierarchical indices
+# and different `CarbonEmission.Level` categories as columns.
+```
+
+
+
 
 
 ## Q2 GLM  , 1000 dollor increases in bill has 5.5% increase in the number of cloth bought
@@ -71,9 +116,11 @@ this means 1000 dollar increase in bill, the log(pi) increase bi = 5.467e-05, th
 
 ```{r}
 
-cloth.model = glm(How.Many.New.Clothes.Monthly ~ Monthly.Grocery.Bill ,data = car.emi,family = poisson(link = 'log'))
+cloth.model = glm(How.Many.New.Clothes.Monthly ~ Monthly.Grocery.Bill ,data = train,family = poisson(link = 'log'))
 summary(cloth.model)
 ```
+H0: model is adequate
+Ha: model is not adequate
 ```{r}
 D = deviance(cloth.model)
 D
@@ -81,6 +128,19 @@ df = cloth.model$df.residual
 df
 pchisq(D,df,lower.tail = FALSE)
 ```
+```{r}
+library(mosaic)
+
+mosaic::xpchisq(D,df,lower.tail = FALSE)
+critical_value <- qchisq(0.95, df)
+
+#points(critical_value, 0.01, col="red", pch=19)
+
+
+#text(critical_value, 0.02, labels = paste("Critical value:", round(critical_value, 2)), pos = 4, col="red")
+
+```
+
 
 
 # Q3 ordinal 
@@ -88,7 +148,7 @@ Social.Activity
 Energy.efficiency
 
 ```{r}
-social.energy.table = xtabs(~Social.Activity+Energy.efficiency,data = car.emi)
+social.energy.table = xtabs(~Social.Activity+Energy.efficiency,data = train)
 social.energy.table
 ```
 
