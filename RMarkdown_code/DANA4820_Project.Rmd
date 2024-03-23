@@ -48,7 +48,7 @@ library(ggplot2)
 # Sample ggplot boxplot command
 ggplot(data = train, aes(x = Diet, y = CarbonEmission, fill = Diet)) +
   geom_boxplot() +
-  scale_fill_manual(values = c("omnivore" = "blue", "pescatarian" = "green", "vegan" = "red", "vegetarian" = "yellow")) +
+  scale_fill_manual(values = c("omnivore" = "red", "pescatarian" = "blue", "vegan" = "green", "vegetarian" = "yellow")) +
   labs(title = "Boxplot of Carbon Emission by Diet",
        x = "Diet",
        y = "Carbon Emission",
@@ -106,7 +106,7 @@ wide_df
 # Sample ggplot boxplot command
 ggplot(data = subset(train,Social.Activity == 'never'), aes(x = Diet, y = CarbonEmission, fill = Diet)) +
   geom_boxplot() +
-  scale_fill_manual(values = c("omnivore" = "blue", "pescatarian" = "green", "vegan" = "red", "vegetarian" = "yellow")) +
+  scale_fill_manual(values = c("omnivore" = "red", "pescatarian" = "blue", "vegan" = "green", "vegetarian" = "yellow")) +
   labs(title = "Boxplot of Carbon Emission by Diet for people never party",
        x = "Diet",
        y = "Carbon Emission",
@@ -117,7 +117,7 @@ ggplot(data = subset(train,Social.Activity == 'never'), aes(x = Diet, y = Carbon
 ```{r}
 ggplot(data = subset(train,Social.Activity == 'sometimes'), aes(x = Diet, y = CarbonEmission, fill = Diet)) +
   geom_boxplot() +
-  scale_fill_manual(values = c("omnivore" = "blue", "pescatarian" = "green", "vegan" = "red", "vegetarian" = "yellow")) +
+  scale_fill_manual(values = c("omnivore" = "red", "pescatarian" = "blue", "vegan" = "green", "vegetarian" = "yellow")) +
   labs(title = "Boxplot of Carbon Emission by Diet for people sometimes party",
        x = "Diet",
        y = "Carbon Emission",
@@ -129,7 +129,7 @@ ggplot(data = subset(train,Social.Activity == 'sometimes'), aes(x = Diet, y = Ca
 ```{r}
 ggplot(data = subset(train,Social.Activity == 'often'), aes(x = Diet, y = CarbonEmission, fill = Diet)) +
   geom_boxplot() +
-  scale_fill_manual(values = c("omnivore" = "blue", "pescatarian" = "green", "vegan" = "red", "vegetarian" = "yellow")) +
+  scale_fill_manual(values = c("omnivore" = "red", "pescatarian" = "blue", "vegan" = "green", "vegetarian" = "yellow")) +
   labs(title = "Boxplot of Carbon Emission by Diet for people often party",
        x = "Diet",
        y = "Carbon Emission",
