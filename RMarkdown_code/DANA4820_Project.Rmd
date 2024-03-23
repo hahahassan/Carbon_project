@@ -142,7 +142,7 @@ ggplot(data = subset(train,Social.Activity == 'often'), aes(x = Diet, y = Carbon
 
 log(pi) = b0 + b1*bill
 bi = 5.467e-05
-this means 1000 dollar increase in bill, the log(pi) increase bi = 5.467e-05, then pi increase 
+this means 1000 dollar increase in bill, the log(pi) increase bi = 5.467e-05 * 1000, then pi increase 
 
 > exp(5.467e-05)
 [1] 1.000055
@@ -188,11 +188,17 @@ Energy.efficiency
 social.energy.table = xtabs(~Social.Activity+Energy.efficiency,data = train)
 social.energy.table
 ```
+```{r}
+chisq.test(social.energy.table)
+```
+```{r}
+mosaic::xpchisq(7.8064,4)
+```
 
 
 ```{r}
 library(vcdExtra)
-A=CMHtest(social.energy.table, rscores = c(0,1,2),cscores=c(0,1,2), types="cor")
+A=CMHtest(social.energy.table, rscores = c(0,2,1),cscores=c(0,1,2), types="cor")
 A
 ```
 
