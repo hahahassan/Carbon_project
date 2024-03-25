@@ -44,9 +44,20 @@ test <- carbon[!split, ]
 ```
 
 ```{r}
-plot(carbon$Total.Waste, carbon$CarbonEmission)
+plot(train$Total.Waste, train$CarbonEmission)
+waste.fit <- lm(CarbonEmission ~ Vehicle.Monthly.Distance.Km + Transport, data = train)
+summary(waste.fit)
 
+plot(waste.fit$fitted.values, waste.fit$residuals)
+s = summary(waste.fit)$sigma
+abline(h = c(2,-2)*s, line = 'red')
 ```
+
+```{r}
+waste.fit2 <- lm(CarbonEmission ~ Vehicle.Monthly.Distance.Km*Transport, data = train)
+summary(waste.fit2)
+```
+
 
 
 ```{r}
