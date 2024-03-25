@@ -217,6 +217,9 @@ P_value=pnorm(M, lower.tail = FALSE)
 P_value
 ```
 
+```{r}
+mosaic::xpnorm(0.633,lower.tail = FALSE)
+```
 
 
 
