@@ -31,7 +31,6 @@ summary(starbucks)
 starbucks$Total.Fat..g.[238] = 3.2
 starbucks$Total.Fat..g. <- as.numeric(starbucks$Total.Fat..g.)
 
-# percent_vec = paste(1:100, "%", sep = "")
 starbucks$Vitamin.A....DV. <-as.numeric(sub("%", "", starbucks$Vitamin.A....DV.))
 starbucks$Vitamin.C....DV. <-as.numeric(sub("%", "", starbucks$Vitamin.C....DV.))
 starbucks$Calcium....DV. <-as.numeric(sub("%", "", starbucks$Calcium....DV.))
@@ -41,7 +40,11 @@ starbucks$Caffeine..mg. <-as.numeric(sub("%", "", starbucks$Caffeine..mg.))
 
 
 ```{r}
+plot(starbucks)
+
 fit1 <- step(lm(Calories ~ ., data = starbucks))
 summary(fit1)
+
+plot(fit1$fitted.values, fit1$residuals)
 ```
 
