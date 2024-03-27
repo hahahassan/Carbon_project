@@ -19,6 +19,38 @@ pairs(star[, numeric_vars])
 ```
 
 ```{r}
+library(ggplot2)
+
+# Create the boxplot using ggplot
+p <- ggplot(data = star, aes(x = Drink.Type, y = Calories)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  xlab("Beverage Drink.Type") +
+  ylab("Calories")
+
+# Print the plot
+print(p)
+
+
+```
+
+```{r}
+table(star$Beverage_category)
+```
+```{r}
+table(star$Drink.Type)
+```
+
+
+```{r}
+Frappuccino = c('Frappuccino® Blended Coffee','Frappuccino® Blended Crème','Frappuccino® Light Blended Coffee')
+Espreeso = c('Classic Espresso Drinks','Coffee','Signature Espresso Drinks')
+star$Drink.Type = ifelse(star$Beverage_category %in% Frappuccino,'Frappuccino',ifelse(star$Beverage_category %in% Espreeso,'Espreeso','non-coffee'))
+```
+
+
+
+```{r}
 library(MASS)
 MASS::stepAIC(lm(Calories~.,data=star),direction="both")
 ```
