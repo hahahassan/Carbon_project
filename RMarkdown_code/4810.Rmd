@@ -7,11 +7,22 @@ output: html_document
 
 #Questions:
 
-## 1. The effect of Waste bag size and Waste bag count weekly on Carbon Emisson? (check interaction) -- model 1(create a new x)
-    a. scatter plot
-    b. lm model, F test
-    c. interpret each coefficient
-    d. use waste bag size and Waste bag count weekly to predict people's carbon emission (use test data)
+```{r}
+star = read.csv('C:\\Users\\wudan\\Downloads\\archive\\starbucks_drinkMenu_expanded.csv')
+```
+
+
+```{r}
+numeric_vars <- sapply(star, is.numeric)
+pairs(star[, numeric_vars])
+
+```
+
+```{r}
+library(MASS)
+MASS::stepAIC(lm(Calories~.,data=star),direction="both")
+```
+
 
 ## 2. the effect of recycling on Carbon Emission? -- model 2 = model 1 + recycling (create a category )
     a. we add this variable to model in question 1, use anova test to check if it is significant enough?
@@ -25,22 +36,92 @@ output: html_document
     5. use test data to do prediction and check the prediction accuracy  
     
 
+## read csv, create new column <Total.Recycling> how many different kind of trash the people recycle {0,1,2,3,4}
 ```{r}
 set.seed(123)
 carbon <- read.csv("..\\data\\Carbon Emission.csv", header = T)
 
+# get the length of list-like string in Recycling, 
 List.Recycling <- lapply(carbon$Recycling, function(x) as.list(unlist(strsplit(gsub("\\[|\\]", "", x), ",")))) # i delete the as.numeric function, it still works, I don't know why we had that function in the beginning
 lengths <- sapply(List.Recycling, length)
 carbon$Total.Recycling <- lengths
 
+```
+
+
+## 1. create a variable total.gabage = bag.size * bag.count
+small : 25, median:45,large:74,extra large:90
+```{r}
+bag.size <- ifelse(carbon$Waste.Bag.Size == "small", 25,
+                   ifelse(carbon$Waste.Bag.Size == "medium", 45,
+                          ifelse(carbon$Waste.Bag.Size == "large", 74, 90)))
+carbon$Total.Waste <- carbon$Waste.Bag.Weekly.Count * bag.size
+```
+
+
+## split data into train and test data
+```{r}
 split <- sample(c(TRUE, FALSE), nrow(carbon), replace=TRUE, prob=c(0.7, 0.3))
 train <- carbon[split, ]
 test <- carbon[!split, ]
 ```
 
+
+
+
+    a. scatter plot
+    b. lm model, F test
+    c. interpret each coefficient
+    d. use waste bag size and Waste bag count weekly to predict people's carbon emission (use test data)
+
+
 ```{r}
-vars <- step(lm(CarbonEmission ~ Body.Type + Sex + Diet + How.Often.Shower + 
+plot(train$Total.Waste, train$CarbonEmission)
+waste.fit <- lm(CarbonEmission ~ Vehicle.Monthly.Distance.Km + Transport, data = train)
+summary(waste.fit)
+
+plot(waste.fit$fitted.values, waste.fit$residuals)
+s = summary(waste.fit)$sigma
+abline(h = c(2,-2)*s, line = 'red')
+
+waste.fit <- lm(CarbonEmission ~ Total.Waste, data = train)
+summary(waste.fit)
+```
+
+```{r}
+waste.fit2 <- lm(CarbonEmission ~ Vehicle.Monthly.Distance.Km*Transport, data = train)
+summary(waste.fit2)
+```
+### model comparision, with and without interaction
+```{r}
+anova(waste.fit,waste.fit2)
+```
+## 3. Model selection based on model 2, -- model final
+    a. MASS::stepAIC(model2,scope= [upper,lower],direction=both)
+    b. partial residual analysis on some variable, then do transformation
+    c. check outliners and influential points
+    4. check multicollinearity, cor, VIF() > 10
+    5. use test data to do prediction and check the prediction accuracy  
+  
+### check the pair plot    
+```{r}
+pairs(CarbonEmission ~ Body.Type + Sex + Diet + How.Often.Shower + 
     Heating.Energy.Source + Transport + Vehicle.Type + Social.Activity + 
+    Monthly.Grocery.Bill + Frequency.of.Traveling.by.Air + Vehicle.Monthly.Distance.Km + 
+    Waste.Bag.Size + Waste.Bag.Weekly.Count + How.Long.TV.PC.Daily.Hour + 
+    How.Many.New.Clothes.Monthly + How.Long.Internet.Daily.Hour + 
+    Energy.efficiency,data = train)
+```
+
+
+```{r}
+library(MASS)
+stepAIC(waste.fit,scope = list(upper = ~Eth*Sex*Age*Lrn, lower = ~1))
+```
+
+
+```{r}
+vars <- step(lm(CarbonEmission ~ 
     Monthly.Grocery.Bill + Frequency.of.Traveling.by.Air + Vehicle.Monthly.Distance.Km + 
     Waste.Bag.Size + Waste.Bag.Weekly.Count + How.Long.TV.PC.Daily.Hour + 
     How.Many.New.Clothes.Monthly + How.Long.Internet.Daily.Hour + 
