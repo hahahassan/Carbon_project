@@ -26,7 +26,8 @@ output: html_document
     
 
 ```{r}
-starbucks <- read.csv("~/Documents/SPRING24/DANA_PROJECTS/data/starbucks_drinkMenu_expanded.csv", header = T)
+set.seed(4810)
+starbucks <- read.csv("..//data//starbucks_drinkMenu_expanded.csv", header = T)
 summary(starbucks)
 starbucks$Total.Fat..g.[238] = 3.2
 starbucks$Total.Fat..g. <- as.numeric(starbucks$Total.Fat..g.)
@@ -36,18 +37,65 @@ starbucks$Vitamin.C....DV. <-as.numeric(sub("%", "", starbucks$Vitamin.C....DV.)
 starbucks$Calcium....DV. <-as.numeric(sub("%", "", starbucks$Calcium....DV.))
 starbucks$Iron....DV. <-as.numeric(sub("%", "", starbucks$Iron....DV.))
 starbucks$Caffeine..mg. <-as.numeric(sub("%", "", starbucks$Caffeine..mg.))
+
+bp <- boxplot(starbucks$Calories~starbucks$Beverage_category, xaxt = "n")
+tick <- seq_along(bp$names)
+axis(1, at = tick, labels = FALSE)
+text(tick, par("usr")[3] - 0.3, bp$names, srt = 45, xpd = TRUE)
+
+Frappuccino = c('Frappuccino® Blended Coffee', 'Frappuccino® Blended Crème', 'Frappuccino® Light Blended Coffee')
+Espreeso = c('Classic Espresso Drinks', 'Coffee', 'Signature Espresso Drinks')
+starbucks$Drink.Type = ifelse(starbucks$Beverage_category %in% Frappuccino,'Frappuccino',ifelse(starbucks$Beverage_category %in% Espreeso,'Espreeso','non-coffee'))
+
+boxplot(starbucks$Calories~starbucks$Drink.Type)
+
+
+split <- sample(c(TRUE, FALSE), nrow(starbucks), replace=TRUE, prob=c(0.85, 0.15))
+train <- starbucks[split, ]
+test <- starbucks[!split, ]
+
 ```
 
 
 ```{r}
 # numeric scatterplots
-pairs(~Calories + Total.Carbohydrates..g. + Total.Fat..g. + Trans.Fat..g. + Saturated.Fat..g. + Sodium..mg. + Total.Carbohydrates..g. +
-        Cholesterol..mg. + Dietary.Fibre..g.+ Sugars..g. + Protein..g. + Vitamin.A....DV. + Vitamin.C....DV. +
-        Calcium....DV. + Iron....DV. + Caffeine..mg.)
+pairs(~ Calories + Total.Carbohydrates..g. + Total.Fat..g. + Trans.Fat..g. + Saturated.Fat..g. + Sodium..mg. +
+        Total.Carbohydrates..g. + Cholesterol..mg. + Dietary.Fibre..g.+ Sugars..g. + Protein..g. + Vitamin.A....DV. +
+        Vitamin.C....DV. + Calcium....DV. + Iron....DV. + Caffeine..mg., data = train)
 
-fit1 <- step(lm(Calories ~ ., data = starbucks))
+fit0 <- lm(Calories ~ 1, data = train)
+fit <- lm(Calories ~ ., data = train)
+
+fit1 <- step(lm(Calories ~ ., data = train))
 summary(fit1)
+s = summary(fit1)$sigma
 
-plot(fit1$fitted.values, fit1$residuals)
+fit.forward <- step(fit0, scope = formula(fit), direction = "forward", data = train)
+
+plot(fit1$fitted.values, rstandard(fit1))
+abline(h = 0, col = 'red')
+abline(h = c(2,-2), col = "red")
+
+identify(y = rstandard(fit1), x = fit1$fitted.values)
+```
+```{r}
+fit_bevcat <- lm(Calories ~ Drink.Type + Total.Fat..g. + Sodium..mg. + 
+    Cholesterol..mg. + Sugars..g. + Protein..g. + Vitamin.C....DV. + 
+    Calcium....DV. + Caffeine..mg., data = train)
+summary(fit_bevcat)
+
+plot(fit_bevcat$fitted.values, fit_bevcat$residuals)
+```
+
+
+
+
+```{r}
+# protein.fit <- lm(Calories ~ Protein..g.*Beverage_prep, data = train)
+# summary(protein.fit)
+
+vars <- rownames(anova(fit1))[1:9]
+test.data <- test[vars]
+test.predict <- predict(fit1, newdata = test)
 ```
 
