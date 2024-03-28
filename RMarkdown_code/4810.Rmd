@@ -5,12 +5,43 @@ date: "2024-03-19"
 output: html_document
 ---
 
-#Questions:
 
+# Read and Introduce our Dataset
 ```{r}
-star = read.csv('C:\\Users\\wudan\\Downloads\\archive\\starbucks_drinkMenu_expanded.csv')
+star = read.csv('..\\data\\starbucks_drinkMenu_expanded.csv')
+head(star)
+```
+# Data Structure
+```{r}
+str(star)
 ```
 
+
+
+# Convert column Total.Fat..g. / Vitamin.A....DV./ Vitamin.C....DV. / Calcium....DV./ Iron....DV./Caffeine..mg.  
+# from chr to num
+```{r}
+# Replace all NA values with 0 in the entire dataframe
+star[is.na(star)] <- 0
+star$Total.Fat..g. = as.numeric(star$Total.Fat..g.)
+star$Vitamin.A....DV. = as.numeric(sub("%", "", star$Vitamin.A....DV.))
+star$Vitamin.C....DV. = as.numeric(sub("%", "", star$Vitamin.C....DV.))
+star$Calcium....DV. = as.numeric(sub("%", "", star$Calcium....DV.))
+star$Iron....DV. = as.numeric(sub("%", "", star$Iron....DV.))
+star$Caffeine..mg. = as.numeric(sub("%", "", star$Caffeine..mg.))
+star[is.na(star)] <- 0
+```
+
+
+# Literature Review
+Total Fat (g) - Fat is a dense source of energy, providing about 9 calories per gram. This includes all types of fats such as saturated fats, trans fats, and unsaturated fats.
+
+Total Carbohydrates (g) - Carbohydrates provide about 4 calories per gram. This includes all types of carbohydrates such as sugars, dietary fibers, and starches.
+
+Protein (g) - Protein also provides about 4 calories per gram.
+
+
+# get all the scatter plot of numerical variables
 
 ```{r}
 numeric_vars <- sapply(star, is.numeric)
@@ -18,154 +49,128 @@ pairs(star[, numeric_vars])
 
 ```
 
-```{r}
-library(ggplot2)
-
-# Create the boxplot using ggplot
-p <- ggplot(data = star, aes(x = Drink.Type, y = Calories)) +
-  geom_boxplot() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  xlab("Beverage Drink.Type") +
-  ylab("Calories")
-
-# Print the plot
-print(p)
 
 
-```
-
-```{r}
-table(star$Beverage_category)
-```
-```{r}
-table(star$Drink.Type)
-```
-
+# according to drink type, combine some levels of the Beverage category
 
 ```{r}
 Frappuccino = c('Frappuccino® Blended Coffee','Frappuccino® Blended Crème','Frappuccino® Light Blended Coffee')
 Espreeso = c('Classic Espresso Drinks','Coffee','Signature Espresso Drinks')
+# others: Shaken Iced Beverages, Tazo® Tea Drinks, Smoothies 
 star$Drink.Type = ifelse(star$Beverage_category %in% Frappuccino,'Frappuccino',ifelse(star$Beverage_category %in% Espreeso,'Espreeso','non-coffee'))
 ```
 
+# boxplot of Calories \~ Drink.Type
 
+```{r}
+library(ggplot2)
 
+# Create the boxplot using ggplot
+p <- ggplot(data = star, aes(x = Drink.Type, y = Calories,fill = Drink.Type)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  xlab("Beverage Drink.Type") +
+  ylab("Calories") +
+  scale_fill_brewer(palette = "Set3") # Adds a color palette for the fill colors
+
+p
+```
+
+# from literature review, we omit sugar , Dietary.Fibre..g., trans fat, saturated fat, because Total.Fat..g. and Total.Carbohydrates..g. can represent them
+
+# Model selection
 ```{r}
 library(MASS)
-MASS::stepAIC(lm(Calories~.,data=star),direction="both")
+MASS::stepAIC(lm(Calories~Total.Fat..g. + 
+     Sodium..mg. + Total.Carbohydrates..g. + 
+    Cholesterol..mg.  + Protein..g. + 
+    Vitamin.A....DV. + Vitamin.C....DV. + Calcium....DV. + Iron....DV. + 
+    Caffeine..mg. + Drink.Type,data=star),direction="both")
+```
+# from the stepAIC, we get model fit1
+```{r}
+fit1 = lm(formula = Calories ~ Total.Fat..g. + Sodium..mg. + Total.Carbohydrates..g. + 
+    Cholesterol..mg. + Protein..g. + Vitamin.C....DV. + Calcium....DV. + 
+    Iron....DV. + Drink.Type, data = star)
+
+summary(fit1)
+
+library(car)
+car::vif(fit1)
 ```
 
-
-## 2. the effect of recycling on Carbon Emission? -- model 2 = model 1 + recycling (create a category )
-    a. we add this variable to model in question 1, use anova test to check if it is significant enough?
-    b. then we use new model to predict, and compare the prediction results with model1 and model2
-    
-## 3. Model selection based on model 2, -- model final
-    a. MASS::stepAIC(model2,scope= [upper,lower],direction=both)
-    b. partial residual analysis on some variable, then do transformation
-    c. check outliners and influential points
-    4. check multicollinearity, cor, VIF() > 10
-    5. use test data to do prediction and check the prediction accuracy  
-    
-
-## read csv, create new column <Total.Recycling> how many different kind of trash the people recycle {0,1,2,3,4}
+# since Total.Carbohydrates..g. and Calcium....DV. ,Protein..g.and reletively high GVIF^(1/(2*Df)). we check their cor
 ```{r}
-set.seed(123)
-carbon <- read.csv("..\\data\\Carbon Emission.csv", header = T)
+cor(star$Total.Carbohydrates..g.,star$Calcium....DV.)
 
-# get the length of list-like string in Recycling, 
-List.Recycling <- lapply(carbon$Recycling, function(x) as.list(unlist(strsplit(gsub("\\[|\\]", "", x), ",")))) # i delete the as.numeric function, it still works, I don't know why we had that function in the beginning
-lengths <- sapply(List.Recycling, length)
-carbon$Total.Recycling <- lengths
+cor(star$Total.Carbohydrates..g.,star$Protein..g.)
+```
+# fit2 , model without Calcium....DV. , Protein..g.
+```{r}
+fit2 = lm(formula = Calories ~ Total.Fat..g. + Sodium..mg. + Total.Carbohydrates..g. + 
+    Cholesterol..mg. + Vitamin.C....DV.  + 
+    Iron....DV. + Drink.Type, data = star)
 
+summary(fit2)
+
+library(car)
+car::vif(fit2)
 ```
 
-
-## 1. create a variable total.gabage = bag.size * bag.count
-small : 25, median:45,large:74,extra large:90
+# compare fit1, fit2
 ```{r}
-bag.size <- ifelse(carbon$Waste.Bag.Size == "small", 25,
-                   ifelse(carbon$Waste.Bag.Size == "medium", 45,
-                          ifelse(carbon$Waste.Bag.Size == "large", 74, 90)))
-carbon$Total.Waste <- carbon$Waste.Bag.Weekly.Count * bag.size
-```
-
-
-## split data into train and test data
-```{r}
-split <- sample(c(TRUE, FALSE), nrow(carbon), replace=TRUE, prob=c(0.7, 0.3))
-train <- carbon[split, ]
-test <- carbon[!split, ]
-```
-
-
-
-
-    a. scatter plot
-    b. lm model, F test
-    c. interpret each coefficient
-    d. use waste bag size and Waste bag count weekly to predict people's carbon emission (use test data)
-
-
-```{r}
-plot(train$Total.Waste, train$CarbonEmission)
-waste.fit <- lm(CarbonEmission ~ Vehicle.Monthly.Distance.Km + Transport, data = train)
-summary(waste.fit)
-
-plot(waste.fit$fitted.values, waste.fit$residuals)
-s = summary(waste.fit)$sigma
-abline(h = c(2,-2)*s, line = 'red')
-
-waste.fit <- lm(CarbonEmission ~ Total.Waste, data = train)
-summary(waste.fit)
+library(lmtest)
+lmtest::lrtest(fit2,fit1)
 ```
 
 ```{r}
-waste.fit2 <- lm(CarbonEmission ~ Vehicle.Monthly.Distance.Km*Transport, data = train)
-summary(waste.fit2)
-```
-### model comparision, with and without interaction
-```{r}
-anova(waste.fit,waste.fit2)
-```
-## 3. Model selection based on model 2, -- model final
-    a. MASS::stepAIC(model2,scope= [upper,lower],direction=both)
-    b. partial residual analysis on some variable, then do transformation
-    c. check outliners and influential points
-    4. check multicollinearity, cor, VIF() > 10
-    5. use test data to do prediction and check the prediction accuracy  
-  
-### check the pair plot    
-```{r}
-pairs(CarbonEmission ~ Body.Type + Sex + Diet + How.Often.Shower + 
-    Heating.Energy.Source + Transport + Vehicle.Type + Social.Activity + 
-    Monthly.Grocery.Bill + Frequency.of.Traveling.by.Air + Vehicle.Monthly.Distance.Km + 
-    Waste.Bag.Size + Waste.Bag.Weekly.Count + How.Long.TV.PC.Daily.Hour + 
-    How.Many.New.Clothes.Monthly + How.Long.Internet.Daily.Hour + 
-    Energy.efficiency,data = train)
+Anova(fit2)
 ```
 
-
+fit3 , model withour Sodium..mg.
 ```{r}
-library(MASS)
-stepAIC(waste.fit,scope = list(upper = ~Eth*Sex*Age*Lrn, lower = ~1))
-```
+fit3 = lm(formula = Calories ~ Total.Fat..g.  + Total.Carbohydrates..g. + 
+    Cholesterol..mg. + Vitamin.C....DV.  + 
+    Iron....DV. + Drink.Type, data = star)
 
-
-```{r}
-vars <- step(lm(CarbonEmission ~ 
-    Monthly.Grocery.Bill + Frequency.of.Traveling.by.Air + Vehicle.Monthly.Distance.Km + 
-    Waste.Bag.Size + Waste.Bag.Weekly.Count + How.Long.TV.PC.Daily.Hour + 
-    How.Many.New.Clothes.Monthly + How.Long.Internet.Daily.Hour + 
-    Energy.efficiency, data = train), direction = "both")
+summary(fit3)
 ```
 
 ```{r}
-s = summary(vars)$sigma
-plot(vars$fitted.values, vars$residuals)
-abline(h = 0, col = "red")
-abline(h = c(-2, 2)*s, col = "red")
-
-
+Anova(fit3)
 ```
+
+# we know that different drink type may have different ingredients. For example, smoothies may have more sugar than classic expresso coffee.
+# so we want to know is there interaction between Drink.Type and other explanatory variables
+
+```{r}
+var_names = c('Total.Fat..g.'  , 'Total.Carbohydrates..g.' , 'Cholesterol..mg.', 'Vitamin.C....DV.'  , 'Iron....DV.')
+for (variable_name in var_names) {
+  p = ggplot(star, aes(x = star[[variable_name]], y = Calories)) +
+    geom_point(aes(color = Drink.Type)) +  # Color points by Drink.Type
+    labs(x = variable_name, y = "Calories", color = "Drink Type")
+  print(p)
+
+}
+```
+
+
+# from Scatter plot above, we can find that there seems interaction between Drink type and Total.carbonhydrates; 
+
+#fit4 ,model with interaction between Drink type and Total.carbonhydrates;
+```{r}
+fit4 = lm(formula = Calories ~ Total.Fat..g.  + Total.Carbohydrates..g. + 
+    Cholesterol..mg. + Vitamin.C....DV.  + 
+    Iron....DV. + Drink.Type +Drink.Type:Total.Carbohydrates..g., data = star)
+
+summary(fit4)
+```
+H0: fit3 better, beta_interaction = 0
+Ha: fit4 better, beta_interaction != 0
+```{r}
+lrtest(fit3,fit4)
+```
+## since lrtest p-value < 0.05,we reject H0, and conclude that model with interaction between Drink type and Total.carbonhydrates is better.
+## Also, from R^2 adjusted, it increases 0.32% to 99.6%
+
 
