@@ -4,7 +4,7 @@ author: "Nandar May"
 date: "2024-03-19"
 output: html_document
 ---
-
+#testing 
 #Questions:
 
 ## 1. The effect of Waste bag size and Waste bag count weekly on Carbon Emisson? (check interaction) -- model 1(create a new x)
