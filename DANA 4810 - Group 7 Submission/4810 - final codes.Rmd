@@ -1,0 +1,175 @@
+---
+title: "4810_Project"
+author: "Group 7"
+date: "2024-03-19"
+output: html_document
+---
+
+
+# Read and Introduce our Dataset
+```{r}
+star = read.csv('..//data//starbucks_drinkMenu_expanded.csv')
+head(star)
+```
+# Data Structure
+```{r}
+str(star)
+```
+
+
+
+# Convert column Total.Fat..g. / Vitamin.A....DV./ Vitamin.C....DV. / Calcium....DV./ Iron....DV./Caffeine..mg.  
+# from chr to num
+```{r}
+# Replace all NA values with 0 in the entire dataframe
+star[is.na(star)] <- 0
+star$Total.Fat..g.[238] = 3.2
+star$Total.Fat..g. = as.numeric(star$Total.Fat..g.)
+star$Vitamin.A....DV. = as.numeric(sub("%", "", star$Vitamin.A....DV.))
+star$Vitamin.C....DV. = as.numeric(sub("%", "", star$Vitamin.C....DV.))
+star$Calcium....DV. = as.numeric(sub("%", "", star$Calcium....DV.))
+star$Iron....DV. = as.numeric(sub("%", "", star$Iron....DV.))
+star$Caffeine..mg. = as.numeric(sub("%", "", star$Caffeine..mg.))
+star[is.na(star)] <- 0
+```
+
+
+# get all the scatter plot of numerical variables
+
+```{r}
+numeric_vars <- sapply(star, is.numeric)
+pairs(star[, numeric_vars])
+
+```
+
+
+# according to drink type, combine some levels of the Beverage category
+
+```{r}
+Frappuccino = c('Frappuccino® Blended Coffee','Frappuccino® Blended Crème','Frappuccino® Light Blended Coffee')
+Espresso = c('Classic Espresso Drinks','Coffee','Signature Espresso Drinks')
+# others: Shaken Iced Beverages, Tazo® Tea Drinks, Smoothies 
+star$Drink.Type = ifelse(star$Beverage_category %in% Frappuccino,'Frappuccino',ifelse(star$Beverage_category %in% Espresso,'Espresso','non-coffee'))
+```
+
+
+# from literature review, we omit sugar , Dietary.Fibre..g., trans fat, saturated fat, because Total.Fat..g. and Total.Carbohydrates..g. can represent them
+
+# Model selection
+```{r}
+library(MASS)
+MASS::stepAIC(lm(Calories~Total.Fat..g. + 
+     Sodium..mg. + Total.Carbohydrates..g. + 
+    Cholesterol..mg.  + Protein..g. + 
+    Vitamin.A....DV. + Vitamin.C....DV. + Calcium....DV. + Iron....DV. + 
+    Caffeine..mg. + Drink.Type,data=star),direction="both")
+```
+# from the stepAIC, we get model fit1, Caffeine and Vitamin A were removed
+```{r}
+fit1 = lm(formula = Calories ~ Total.Fat..g. + Sodium..mg. + Total.Carbohydrates..g. + 
+    Cholesterol..mg. + Protein..g. + Vitamin.C....DV. + Calcium....DV. + 
+    Iron....DV. + Drink.Type, data = star)
+
+summary(fit1)
+
+library(car)
+car::vif(fit1)
+```
+
+# Detected multicollinearity between several variables​
+
+# Total Fat and Total Carbohydrates are essential to our model​
+
+# => Removed Protein and Calcium from the model
+
+# fit2 , model without Calcium....DV. , Protein..g.
+```{r}
+fit2 = lm(formula = Calories ~ Total.Fat..g. + Sodium..mg. + Total.Carbohydrates..g. + 
+    Cholesterol..mg. + Vitamin.C....DV.  + 
+    Iron....DV. + Drink.Type, data = star)
+
+summary(fit2)
+
+library(car)
+car::vif(fit2)
+```
+
+# compare fit1, fit2
+```{r}
+library(lmtest)
+lmtest::lrtest(fit2,fit1)
+```
+
+```{r}
+Anova(fit2)
+```
+
+fit3 , model without Sodium..mg.
+```{r}
+fit3 = lm(formula = Calories ~ Total.Fat..g.  + Total.Carbohydrates..g. + 
+    Cholesterol..mg. + Vitamin.C....DV.  + 
+    Iron....DV. + Drink.Type, data = star)
+
+summary(fit3)
+```
+
+```{r}
+Anova(fit3)
+```
+
+# we know that different drink type may have different ingredients. For example, smoothies may have more sugar than classic expresso coffee.
+# so we want to know is there interaction between Drink.Type and other explanatory variables
+
+```{r}
+var_names = c('Protein..g.', 'Total.Fat..g.'  , 'Total.Carbohydrates..g.' , 'Cholesterol..mg.', 'Vitamin.C....DV.'  , 'Iron....DV.')
+for (variable_name in var_names) {
+  p = ggplot(star, aes(x = star[[variable_name]], y = Calories, color = Drink.Type)) +
+    geom_point(aes(color = Drink.Type)) +  # Color points by Drink.Type
+    # geom_smooth(method = "lm", se = FALSE) + 
+    labs(x = variable_name, y = "Calories", color = "Drink Type")
+  print(p)
+
+}
+
+```
+
+
+# from Scatter plot above, we can find that there seems interaction between Drink type and Total.carbonhydrates; 
+
+#fit4 ,model with interaction between Drink type and Total.carbonhydrates;
+```{r}
+fit4 = lm(formula = Calories ~ Total.Fat..g.  + Total.Carbohydrates..g. + 
+    Cholesterol..mg. + Vitamin.C....DV.  + 
+    Iron....DV. + Drink.Type +Drink.Type:Total.Carbohydrates..g., data = star)
+
+summary(fit4)
+
+Anova(fit4)
+```
+H0: fit3 better, beta_interaction = 0
+Ha: fit4 better, beta_interaction != 0
+```{r}
+lrtest(fit3,fit4)
+```
+## since lrtest p-value < 0.05,we reject H0, and conclude that model with interaction between Drink type and Total.carbonhydrates is better.
+## However, R2 adjusted only increased by 0.32%​ Since simple model is preferred. We stay with Model 3 as final model.
+
+
+### Residuals 
+```{r}
+s = summary(fit3)$sigma
+plot(fit3$fitted.values, fit3$residuals)
+abline(h = 0, col = "red")
+abline(h = c(-2, 2)*s, col = "red")
+```
+
+
+```{r}
+hist(fit3$residuals)
+```
+
+```{r}
+qqnorm(fit3$residuals)
+qqline(fit3$residuals,col='red')
+```
+
