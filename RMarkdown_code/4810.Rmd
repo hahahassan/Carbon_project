@@ -162,27 +162,21 @@ lrtest(fit3,fit4)
 ## However, R2 adjusted only increased by 0.32%​ Since simple model is preferred. We stay with Model 3 as final model.
 
 
-### outlier detection:
+### Residuals 
 ```{r}
-s = summary(fit4)$sigma
-
-plot(fit4$fitted.values, fit4$residuals)
+s = summary(fit3)$sigma
+plot(fit3$fitted.values, fit3$residuals)
 abline(h = 0, col = "red")
 abline(h = c(-2, 2)*s, col = "red")
-outliers <-  identify(fit4$fitted.values, fit4$residuals)
-star2 <- star[-outliers, ]
+```
+
+
+```{r}
+hist(fit3$residuals)
 ```
 
 ```{r}
-fit4.no.outliers <-  lm(formula = Calories ~ Total.Fat..g.  + Total.Carbohydrates..g. + 
-    Cholesterol..mg. + Vitamin.C....DV.  + 
-    Iron....DV. + Drink.Type +Drink.Type:Total.Carbohydrates..g., data = star2)
-summary(fit4.no.outliers)
-
-s2 <- summary(fit4.no.outliers)$sigma
-
-plot(fit4.no.outliers$fitted.values, fit4.no.outliers$residuals)
-abline(h = 0, col = "red")
-abline(h = c(-2, 2)*s2, col = "red")
+qqnorm(fit3$residuals)
+qqline(fit3$residuals,col='red')
 ```
 
