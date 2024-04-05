@@ -8,7 +8,7 @@ output: html_document
 
 # Read and Introduce our Dataset
 ```{r}
-star = read.csv('..\\data\\starbucks_drinkMenu_expanded.csv')
+star = read.csv('..//data//starbucks_drinkMenu_expanded.csv')
 head(star)
 ```
 # Data Structure
@@ -60,21 +60,6 @@ Espreeso = c('Classic Espresso Drinks','Coffee','Signature Espresso Drinks')
 star$Drink.Type = ifelse(star$Beverage_category %in% Frappuccino,'Frappuccino',ifelse(star$Beverage_category %in% Espreeso,'Espreeso','non-coffee'))
 ```
 
-# boxplot of Calories \~ Drink.Type
-
-```{r}
-library(ggplot2)
-
-# Create the boxplot using ggplot
-p <- ggplot(data = star, aes(x = Drink.Type, y = Calories,fill = Drink.Type)) +
-  geom_boxplot() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  xlab("Beverage Drink.Type") +
-  ylab("Calories") +
-  scale_fill_brewer(palette = "Set3") # Adds a color palette for the fill colors
-
-p
-```
 
 # from literature review, we omit sugar , Dietary.Fibre..g., trans fat, saturated fat, because Total.Fat..g. and Total.Carbohydrates..g. can represent them
 
@@ -87,7 +72,7 @@ MASS::stepAIC(lm(Calories~Total.Fat..g. +
     Vitamin.A....DV. + Vitamin.C....DV. + Calcium....DV. + Iron....DV. + 
     Caffeine..mg. + Drink.Type,data=star),direction="both")
 ```
-# from the stepAIC, we get model fit1
+# from the stepAIC, we get model fit1, Caffeine and Vitamin A were removed
 ```{r}
 fit1 = lm(formula = Calories ~ Total.Fat..g. + Sodium..mg. + Total.Carbohydrates..g. + 
     Cholesterol..mg. + Protein..g. + Vitamin.C....DV. + Calcium....DV. + 
@@ -99,12 +84,12 @@ library(car)
 car::vif(fit1)
 ```
 
-# since Total.Carbohydrates..g. and Calcium....DV. ,Protein..g.and reletively high GVIF^(1/(2*Df)). we check their cor
-```{r}
-cor(star$Total.Carbohydrates..g.,star$Calcium....DV.)
+# Detected multicollinearity between several variables​
 
-cor(star$Total.Carbohydrates..g.,star$Protein..g.)
-```
+# Total Fat and Total Carbohydrates are essential to our model​
+
+# => Removed Protein and Calcium from the model
+
 # fit2 , model without Calcium....DV. , Protein..g.
 ```{r}
 fit2 = lm(formula = Calories ~ Total.Fat..g. + Sodium..mg. + Total.Carbohydrates..g. + 
@@ -171,6 +156,6 @@ Ha: fit4 better, beta_interaction != 0
 lrtest(fit3,fit4)
 ```
 ## since lrtest p-value < 0.05,we reject H0, and conclude that model with interaction between Drink type and Total.carbonhydrates is better.
-## Also, from R^2 adjusted, it increases 0.32% to 99.6%
+## However, R2 adjusted only increased by 0.32%​ Since simple model is preferred. We stay with Model 3 as final model.
 
 
