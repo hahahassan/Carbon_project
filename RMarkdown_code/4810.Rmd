@@ -23,6 +23,7 @@ str(star)
 ```{r}
 # Replace all NA values with 0 in the entire dataframe
 star[is.na(star)] <- 0
+star$Total.Fat..g.[238] = 3.2
 star$Total.Fat..g. = as.numeric(star$Total.Fat..g.)
 star$Vitamin.A....DV. = as.numeric(sub("%", "", star$Vitamin.A....DV.))
 star$Vitamin.C....DV. = as.numeric(sub("%", "", star$Vitamin.C....DV.))
@@ -129,14 +130,16 @@ Anova(fit3)
 # so we want to know is there interaction between Drink.Type and other explanatory variables
 
 ```{r}
-var_names = c('Total.Fat..g.'  , 'Total.Carbohydrates..g.' , 'Cholesterol..mg.', 'Vitamin.C....DV.'  , 'Iron....DV.')
+var_names = c('Protein..g.', 'Total.Fat..g.'  , 'Total.Carbohydrates..g.' , 'Cholesterol..mg.', 'Vitamin.C....DV.'  , 'Iron....DV.')
 for (variable_name in var_names) {
-  p = ggplot(star, aes(x = star[[variable_name]], y = Calories)) +
+  p = ggplot(star, aes(x = star[[variable_name]], y = Calories, color = Drink.Type)) +
     geom_point(aes(color = Drink.Type)) +  # Color points by Drink.Type
+    # geom_smooth(method = "lm", se = FALSE) + 
     labs(x = variable_name, y = "Calories", color = "Drink Type")
   print(p)
 
 }
+
 ```
 
 
@@ -158,4 +161,28 @@ lrtest(fit3,fit4)
 ## since lrtest p-value < 0.05,we reject H0, and conclude that model with interaction between Drink type and Total.carbonhydrates is better.
 ## However, R2 adjusted only increased by 0.32%​ Since simple model is preferred. We stay with Model 3 as final model.
 
+
+### outlier detection:
+```{r}
+s = summary(fit4)$sigma
+
+plot(fit4$fitted.values, fit4$residuals)
+abline(h = 0, col = "red")
+abline(h = c(-2, 2)*s, col = "red")
+outliers <-  identify(fit4$fitted.values, fit4$residuals)
+star2 <- star[-outliers, ]
+```
+
+```{r}
+fit4.no.outliers <-  lm(formula = Calories ~ Total.Fat..g.  + Total.Carbohydrates..g. + 
+    Cholesterol..mg. + Vitamin.C....DV.  + 
+    Iron....DV. + Drink.Type +Drink.Type:Total.Carbohydrates..g., data = star2)
+summary(fit4.no.outliers)
+
+s2 <- summary(fit4.no.outliers)$sigma
+
+plot(fit4.no.outliers$fitted.values, fit4.no.outliers$residuals)
+abline(h = 0, col = "red")
+abline(h = c(-2, 2)*s2, col = "red")
+```
 
